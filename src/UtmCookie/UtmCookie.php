@@ -110,7 +110,7 @@ class UtmCookie
         $this->initStaticValues();
         // utm from _COOKIE
         $utmCookieFilter = filter_var(
-            json_decode(filter_input(INPUT_COOKIE, $this->utmCookieName), true),
+            json_decode((string) filter_input(INPUT_COOKIE, $this->utmCookieName), true),
             FILTER_SANITIZE_STRING,
             FILTER_REQUIRE_ARRAY
         );

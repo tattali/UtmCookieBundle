@@ -5,6 +5,6 @@
         https://symfony.com/schema/dic/services/services-1.0.xsd">
 
     <services>
-        <service id="UtmCookieBundle\UtmCookie\UtmCookie"></service>
+        <service id="UtmCookieBundle\UtmCookie\UtmCookie" public="true"></service>
     </services>
 </container>
