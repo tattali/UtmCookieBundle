@@ -15,22 +15,7 @@ Install the bundle:
 $ composer require tattali/utm-cookie-bundle
 ```
 
-### Register the bundle in app/AppKernel.php for none flex projects:
-
-```php
-// app/AppKernel.php
-
-public function registerBundles()
-{
-    return array(
-        // ...
-        new UtmCookieBundle\UtmCookieBundle(),
-    );
-}
-```
-
 ### Basic Usage
-
 
 ```php
 <?php
