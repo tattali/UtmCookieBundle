@@ -1,7 +1,7 @@
 {
     "name": "tattali/utm-cookie-bundle",
     "type": "symfony-bundle",
-    "description": "The UtmCookieBundle is a Symfony Bundle to save utm parameters from url into cookie when exists. Than cookie (utm) can be used later without parsing google or any other cookies.",
+    "description": "This bundle allow you to save utm parameters from url into a cookie when they exists. It's also provide a bunch of tools to easily retrive all or each utm.",
     "homepage": "https://github.com/tattali/UtmCookieBundle",
     "keywords": ["utm", "cookie", "symfony", "symfony utm"],
     "license": "MIT",
