@@ -153,7 +153,7 @@ class UtmCookie
      */
     public function onKernelRequest($event)
     {
-        if (!$event->isMasterRequest()) {
+        if (!$event->isMainRequest()) {
             return;
         }
 
