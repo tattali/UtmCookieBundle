@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace UtmCookieBundle\UtmCookie;
 
 use DateTime;
-use Symfony\Component\HttpKernel\Event\GetResponseEvent;
 use Symfony\Component\HttpKernel\Event\RequestEvent;
 use UnexpectedValueException;
 
@@ -149,9 +148,9 @@ class UtmCookie
     /**
      * onKernelRequest called if autoInit is true.
      *
-     * @param GetResponseEvent|RequestEvent $event
+     * @param RequestEvent $event
      */
-    public function onKernelRequest($event)
+    public function onKernelRequest(RequestEvent $event)
     {
         if (!$event->isMainRequest()) {
             return;
