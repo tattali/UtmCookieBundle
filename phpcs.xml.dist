@@ -21,4 +21,5 @@
     <rule ref="PSR2.ControlStructures.SwitchDeclaration"/>
 
     <file>src/</file>
+    <file>tests/</file>
 </ruleset>

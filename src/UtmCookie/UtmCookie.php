@@ -4,72 +4,83 @@ declare(strict_types=1);
 
 namespace UtmCookieBundle\UtmCookie;
 
-use DateTime;
+use Symfony\Component\HttpFoundation\Cookie;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpKernel\Event\RequestEvent;
-use UnexpectedValueException;
+use Symfony\Component\HttpKernel\Event\ResponseEvent;
+use Symfony\Contracts\Service\ResetInterface;
 
-class UtmCookie
+class UtmCookie implements ResetInterface
 {
+    public const UTM_KEYS = [
+        'utm_campaign',
+        'utm_medium',
+        'utm_source',
+        'utm_term',
+        'utm_content',
+    ];
+
     /**
      * Name of cookie where will be saved utm params.
-     *
-     * @var string
      */
-    private $utmCookieName;
+    private string $utmCookieName = 'utm';
 
     /**
-     * @var array
+     * @var array<string, string|null>|null
      */
-    private $utmCookie;
+    private ?array $utmCookie = null;
 
     /**
-     * Lifetime of utmCookie.
-     *
-     * @var int
+     * Lifetime of utmCookie in seconds.
      */
-    private $lifetime;
+    private int $lifetime = 604800;
 
     /**
      * If overwrite all utm values when even one is set in get. Default true.
-     *
-     * @var bool
      */
-    private $overwrite;
+    private bool $overwrite = true;
 
     /**
      * Path for cookie. Default "/" so not empty like in setcookie PHP function!
-     *
-     * @var string
      */
-    private $path = '/';
+    private string $path = '/';
 
     /**
      * Domain for cookie.
-     *
-     * @var string
      */
-    private $domain = '';
+    private string $domain = '';
 
     /**
      * If cookie should be secured (same as $secure parameter in setcookie PHP function).
-     *
-     * @var bool
      */
-    private $secure = false;
+    private bool $secure = false;
 
     /**
      * If cookie should be http only (same as $httponly parameter in setcookie PHP function).
-     *
-     * @var bool
      */
-    private $httpOnly = false;
+    private bool $httpOnly = false;
+
+    /**
+     * Cookie to add to the response of the current request.
+     */
+    private ?Cookie $pendingCookie = null;
+
+    /**
+     * Without a request stack (or outside of a request), values are read from the
+     * $_GET and $_COOKIE superglobals and the cookie is sent with setcookie().
+     */
+    public function __construct(
+        private readonly ?RequestStack $requestStack = null,
+    ) {
+    }
 
     /**
      * Remove utmCookie.
      */
-    public function clear()
+    public function clear(): void
     {
-        setcookie($this->utmCookieName, '', -1, $this->path, $this->domain, $this->secure, $this->httpOnly);
+        $this->sendCookie(new Cookie($this->utmCookieName, null, 1, $this->path, $this->domain ?: null, $this->secure, $this->httpOnly, false, null));
     }
 
     /**
@@ -77,80 +88,64 @@ class UtmCookie
      *
      * @param string|null $key default null (return all values as array)
      *
-     * @return string|array|null return string value, array or null if not set
+     * @return array<string, string|null>|string|null return string value, array or null if not set
      */
-    public function get(string $key = null)
+    public function get(?string $key = null): array|string|null
     {
         $this->init();
+        \assert(null !== $this->utmCookie);
 
         if (null === $key) {
             return $this->utmCookie;
         }
-        if (0 !== mb_strpos($key, 'utm_')) {
+        if (!str_starts_with($key, 'utm_')) {
             $key = 'utm_'.$key;
         }
         if (!\array_key_exists($key, $this->utmCookie)) {
-            throw new UnexpectedValueException(sprintf('Argument $key has unexpected value "%s". Utm value with key "%s" does not exists.', $key, $key));
+            throw new \UnexpectedValueException(\sprintf('Argument $key has unexpected value "%s". Utm value with key "%s" does not exists.', $key, $key));
         }
 
         return $this->utmCookie[$key];
     }
 
     /**
-     * Initialize. Get values from _GET and _COOKIES and save to UtmCookie. Init $this->utmCookie value.
+     * Initialize. Get values from the query string and the cookie and save to UtmCookie. Init $this->utmCookie value.
      */
-    public function init()
+    public function init(): void
     {
         // if initialized, just return
         if (null !== $this->utmCookie) {
             return;
         }
 
-        $this->initStaticValues();
-        // utm from _COOKIE
-        $utmCookieFilter = filter_var(
-            json_decode((string) filter_input(INPUT_COOKIE, $this->utmCookieName), true),
-            FILTER_SANITIZE_STRING,
-            FILTER_REQUIRE_ARRAY
-        );
-        if (!\is_array($utmCookieFilter)) {
-            $utmCookieFilter = [];
-        }
-        $utmCookie = $this->removeNullValues($utmCookieFilter);
-        // utm from _GET
-        $utmGetFilter = filter_input_array(
-            INPUT_GET,
-            [
-                'utm_campaign' => FILTER_SANITIZE_STRING,
-                'utm_medium' => FILTER_SANITIZE_STRING,
-                'utm_source' => FILTER_SANITIZE_STRING,
-                'utm_term' => FILTER_SANITIZE_STRING,
-                'utm_content' => FILTER_SANITIZE_STRING,
-            ]
-        );
-        if (!\is_array($utmGetFilter)) {
-            $utmGetFilter = [];
-        }
-        $utmGet = $this->removeNullValues($utmGetFilter);
+        $request = $this->requestStack?->getMainRequest();
 
-        if (0 !== \count($utmGet) && $this->overwrite) {
-            $utmCookieSave = array_merge($this->utmCookie, $utmGet);
+        // utm from the cookie
+        $cookieValue = $request instanceof Request ? $request->cookies->get($this->utmCookieName) : ($_COOKIE[$this->utmCookieName] ?? null);
+        $decoded = \is_string($cookieValue) ? json_decode($cookieValue, true) : null;
+        $utmCookie = $this->filterUtmValues(\is_array($decoded) ? $decoded : []);
+
+        // utm from the query string
+        $utmGet = $this->filterUtmValues($request instanceof Request ? $request->query->all() : $_GET);
+
+        $defaults = array_fill_keys(self::UTM_KEYS, null);
+        if ([] !== $utmGet && $this->overwrite) {
+            $utmCookieSave = array_merge($defaults, $utmGet);
         } else {
-            $utmCookieSave = array_merge($this->utmCookie, $utmCookie, $utmGet);
+            $utmCookieSave = array_merge($defaults, $utmCookie, $utmGet);
         }
-        if (0 !== \count($utmGet)) {
-            $this->save($utmCookieSave);
-        } else {
-            $this->utmCookie = $utmCookieSave;
+
+        $this->utmCookie = $utmCookieSave;
+
+        if ([] !== $utmGet) {
+            $this->sendCookie(new Cookie($this->utmCookieName, (string) json_encode($utmCookieSave), time() + $this->lifetime, $this->path, $this->domain ?: null, $this->secure, $this->httpOnly, false, null));
         }
     }
 
     /**
      * onKernelRequest called if autoInit is true.
-     *
-     * @param RequestEvent $event
      */
-    public function onKernelRequest(RequestEvent $event)
+    public function onKernelRequest(RequestEvent $event): void
     {
         if (!$event->isMainRequest()) {
             return;
@@ -160,9 +155,28 @@ class UtmCookie
     }
 
     /**
+     * Adds the utm cookie set or cleared during the request to the response.
+     */
+    public function onKernelResponse(ResponseEvent $event): void
+    {
+        if (!$event->isMainRequest() || null === $this->pendingCookie) {
+            return;
+        }
+
+        $event->getResponse()->headers->setCookie($this->pendingCookie);
+        $this->pendingCookie = null;
+    }
+
+    public function reset(): void
+    {
+        $this->utmCookie = null;
+        $this->pendingCookie = null;
+    }
+
+    /**
      * Set domain for cookie.
      */
-    public function setDomain(string $domain)
+    public function setDomain(string $domain): void
     {
         $this->domain = $domain;
     }
@@ -170,7 +184,7 @@ class UtmCookie
     /**
      * Set httponly for cookie.
      */
-    public function setHttpOnly(bool $httpOnly)
+    public function setHttpOnly(bool $httpOnly): void
     {
         $this->httpOnly = $httpOnly;
     }
@@ -178,10 +192,10 @@ class UtmCookie
     /**
      * Set lifetime of utm cookie in seconds.
      */
-    public function setLifetime(int $lifetime)
+    public function setLifetime(int $lifetime): void
     {
         if ($lifetime <= 0) {
-            throw new UnexpectedValueException(sprintf('Lifetime has unexpected value "%s". Value must be positive.', $lifetime));
+            throw new \UnexpectedValueException(\sprintf('Lifetime has unexpected value "%s". Value must be positive.', $lifetime));
         }
         $this->lifetime = $lifetime;
     }
@@ -189,10 +203,10 @@ class UtmCookie
     /**
      * Set name of cookie where will be saved utm params.
      */
-    public function setName(string $utmCookieName)
+    public function setName(string $utmCookieName): void
     {
         if ('' === trim($utmCookieName)) {
-            throw new UnexpectedValueException(sprintf('Name has unexpected value "%s". Value can\'t be empty.', $utmCookieName));
+            throw new \UnexpectedValueException(\sprintf('Name has unexpected value "%s". Value can\'t be empty.', $utmCookieName));
         }
 
         $this->utmCookieName = $utmCookieName;
@@ -201,9 +215,9 @@ class UtmCookie
     }
 
     /**
-     * Set if even one utm value in _GET will overwrite all utm values or not.
+     * Set if even one utm value in the query string will overwrite all utm values or not.
      */
-    public function setOverwrite(bool $overwrite)
+    public function setOverwrite(bool $overwrite): void
     {
         $this->overwrite = $overwrite;
         // cancel previous init
@@ -213,7 +227,7 @@ class UtmCookie
     /**
      * Set path for cookie.
      */
-    public function setPath(string $path)
+    public function setPath(string $path): void
     {
         $this->path = $path;
     }
@@ -221,54 +235,48 @@ class UtmCookie
     /**
      * Set secure for cookie.
      */
-    public function setSecure(bool $secure)
+    public function setSecure(bool $secure): void
     {
         $this->secure = $secure;
     }
 
     /**
-     * Initialize static values to default (or empty) values.
-     */
-    private function initStaticValues()
-    {
-        $this->utmCookie = [
-            'utm_campaign' => null,
-            'utm_medium' => null,
-            'utm_source' => null,
-            'utm_term' => null,
-            'utm_content' => null,
-        ];
-    }
-
-    /**
-     * Remove elements with null values from array.
+     * Keep the known utm keys with a scalar value, sanitized.
      *
-     * @return array
+     * @param array<mixed> $values
+     *
+     * @return array<string, string>
      */
-    private static function removeNullValues(array $array = null)
+    private function filterUtmValues(array $values): array
     {
-        // null (undefined) or false (filter failed)
-        if (null === $array || false === $array) {
-            return [];
+        $filtered = [];
+        foreach (self::UTM_KEYS as $key) {
+            if (isset($values[$key]) && \is_scalar($values[$key])) {
+                $filtered[$key] = self::sanitize((string) $values[$key]);
+            }
         }
 
-        return array_filter(
-            $array,
-            function ($value) {
-                return null !== $value;
-            }
-        );
+        return $filtered;
     }
 
     /**
-     * Save utmCookie value into _COOKIE and set actual $this->utmCookie value (call only from init).
+     * Strip tags and encode quotes, as the removed FILTER_SANITIZE_STRING filter did.
      */
-    private function save(array $utmCookieSave)
+    private static function sanitize(string $value): string
     {
-        $expire = (new DateTime())->getTimestamp() + $this->lifetime;
+        return str_replace(["'", '"'], ['&#39;', '&#34;'], strip_tags($value));
+    }
 
-        setcookie($this->utmCookieName, json_encode($utmCookieSave), $expire, $this->path, $this->domain, $this->secure, $this->httpOnly);
+    private function sendCookie(Cookie $cookie): void
+    {
+        if ($this->requestStack?->getMainRequest() instanceof Request) {
+            $this->pendingCookie = $cookie;
 
-        $this->utmCookie = $utmCookieSave;
+            return;
+        }
+
+        if (!headers_sent()) {
+            header('Set-Cookie: '.$cookie, false);
+        }
     }
 }

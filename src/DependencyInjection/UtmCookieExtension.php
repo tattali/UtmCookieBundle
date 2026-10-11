@@ -4,35 +4,35 @@ declare(strict_types=1);
 
 namespace UtmCookieBundle\DependencyInjection;
 
-use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
-use Symfony\Component\DependencyInjection\Loader\XmlFileLoader;
-use Symfony\Component\HttpKernel\DependencyInjection\Extension;
+use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\DependencyInjection\Extension\Extension;
+use Symfony\Component\DependencyInjection\Reference;
 use UtmCookieBundle\UtmCookie\UtmCookie;
 
 class UtmCookieExtension extends Extension
 {
-    public function load(array $configs, ContainerBuilder $container)
+    public function load(array $configs, ContainerBuilder $container): void
     {
-        $loader = new XmlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
-        $loader->load('services.xml');
-
         $configuration = new Configuration();
         $config = $this->processConfiguration($configuration, $configs);
 
-        $definition = $container->getDefinition(UtmCookie::class);
-        $definition->addMethodCall('setName', [$config['name']]);
-        $definition->addMethodCall('setLifetime', [$config['lifetime']]);
-        $definition->addMethodCall('setPath', [$config['path']]);
-        $definition->addMethodCall('setDomain', [$config['domain']]);
-        $definition->addMethodCall('setOverwrite', [$config['overwrite']]);
-        $definition->addMethodCall('setSecure', [$config['secure']]);
-        $definition->addMethodCall('setHttponly', [$config['httponly']]);
+        $definition = $container->register(UtmCookie::class, UtmCookie::class)
+            ->setPublic(true)
+            ->setArguments([new Reference('request_stack', ContainerInterface::NULL_ON_INVALID_REFERENCE)])
+            ->addMethodCall('setName', [$config['name']])
+            ->addMethodCall('setLifetime', [$config['lifetime']])
+            ->addMethodCall('setPath', [$config['path']])
+            ->addMethodCall('setDomain', [$config['domain']])
+            ->addMethodCall('setOverwrite', [$config['overwrite']])
+            ->addMethodCall('setSecure', [$config['secure']])
+            ->addMethodCall('setHttpOnly', [$config['httponly']])
+            ->addTag('kernel.event_listener', ['event' => 'kernel.response', 'method' => 'onKernelResponse'])
+            ->addTag('kernel.reset', ['method' => 'reset'])
+        ;
+
         if ($config['auto_init']) {
-            $definition->addTag(
-                'kernel.event_listener',
-                ['event' => 'kernel.request', 'method' => 'onKernelRequest']
-            );
+            $definition->addTag('kernel.event_listener', ['event' => 'kernel.request', 'method' => 'onKernelRequest']);
         }
     }
 }
