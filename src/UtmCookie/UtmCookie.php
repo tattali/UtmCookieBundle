@@ -76,10 +76,11 @@ class UtmCookie implements ResetInterface
     }
 
     /**
-     * Remove utmCookie.
+     * Remove utmCookie. Until the next request, get() returns null values.
      */
     public function clear(): void
     {
+        $this->utmCookie = array_fill_keys(self::UTM_KEYS, null);
         $this->sendCookie(new Cookie($this->utmCookieName, null, 1, $this->path, $this->domain ?: null, $this->secure, $this->httpOnly, false, null));
     }
 
