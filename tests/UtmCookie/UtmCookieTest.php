@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace UtmCookieBundle\Tests\UtmCookie;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\Cookie;
 use Symfony\Component\HttpFoundation\Request;
@@ -71,6 +72,91 @@ final class UtmCookieTest extends TestCase
         self::assertSame('example.com', $cookie->getDomain());
         self::assertTrue($cookie->isSecure());
         self::assertTrue($cookie->isHttpOnly());
+    }
+
+    public function testCookieIsSameSiteLaxByDefault(): void
+    {
+        $utmCookie = $this->createUtmCookie(Request::create('/', 'GET', ['utm_source' => 'ads']));
+        $utmCookie->init();
+
+        $cookie = $this->sendResponse($utmCookie);
+        self::assertInstanceOf(Cookie::class, $cookie);
+        self::assertSame(Cookie::SAMESITE_LAX, $cookie->getSameSite());
+    }
+
+    /**
+     * @return iterable<string, array{string|null, string|null}>
+     */
+    public static function sameSiteProvider(): iterable
+    {
+        yield 'strict' => ['strict', 'strict'];
+        yield 'none' => ['none', 'none'];
+        yield 'case insensitive' => ['Strict', 'strict'];
+        yield 'no attribute' => [null, null];
+    }
+
+    #[DataProvider('sameSiteProvider')]
+    public function testSameSiteCanBeChanged(?string $sameSite, ?string $expected): void
+    {
+        $utmCookie = $this->createUtmCookie(Request::create('/', 'GET', ['utm_source' => 'ads']));
+        $utmCookie->setSameSite($sameSite);
+        $utmCookie->init();
+
+        $cookie = $this->sendResponse($utmCookie);
+        self::assertInstanceOf(Cookie::class, $cookie);
+        self::assertSame($expected, $cookie->getSameSite());
+    }
+
+    public function testInvalidSameSiteThrows(): void
+    {
+        $this->expectException(\UnexpectedValueException::class);
+        (new UtmCookie())->setSameSite('sometimes');
+    }
+
+    public function testCookieIsSecureOnHttpsByDefault(): void
+    {
+        $utmCookie = $this->createUtmCookie(Request::create('https://example.com/', 'GET', ['utm_source' => 'ads']));
+        $utmCookie->init();
+
+        $cookie = $this->sendResponse($utmCookie);
+        self::assertInstanceOf(Cookie::class, $cookie);
+        self::assertTrue($cookie->isSecure());
+    }
+
+    public function testSecureCanBeDisabledOnHttps(): void
+    {
+        $utmCookie = $this->createUtmCookie(Request::create('https://example.com/', 'GET', ['utm_source' => 'ads']));
+        $utmCookie->setSecure(false);
+        $utmCookie->init();
+
+        $cookie = $this->sendResponse($utmCookie);
+        self::assertInstanceOf(Cookie::class, $cookie);
+        self::assertFalse($cookie->isSecure());
+    }
+
+    public function testSecureCanBeSetBackToAutomatic(): void
+    {
+        $utmCookie = $this->createUtmCookie(Request::create('/', 'GET', ['utm_source' => 'ads']));
+        $utmCookie->setSecure(true);
+        $utmCookie->setSecure(null);
+        $utmCookie->init();
+
+        $cookie = $this->sendResponse($utmCookie);
+        self::assertInstanceOf(Cookie::class, $cookie);
+        self::assertFalse($cookie->isSecure());
+    }
+
+    public function testClearedCookieHasTheSameFlags(): void
+    {
+        $utmCookie = $this->createUtmCookie(Request::create('https://example.com/'));
+        $utmCookie->setSameSite('strict');
+        $utmCookie->clear();
+
+        $cookie = $this->sendResponse($utmCookie);
+        self::assertInstanceOf(Cookie::class, $cookie);
+        self::assertTrue($cookie->isCleared());
+        self::assertTrue($cookie->isSecure());
+        self::assertSame(Cookie::SAMESITE_STRICT, $cookie->getSameSite());
     }
 
     public function testValuesAreReadFromCookie(): void

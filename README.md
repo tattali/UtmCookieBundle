@@ -71,8 +71,15 @@ utm_cookie:
     name: 'utm'       # The name of the cookie (default value "utm")
     overwrite: true   # If overwrite all utm values when even one is set in get
     path: '/'         # The path on the server in which the cookie will be available on
-    secure: false     # Indicates that the cookie should only be transmitted over a secure HTTPS connection from the client
+    samesite: 'lax'   # The SameSite attribute: 'lax', 'strict', 'none', or null to leave it out
+    secure: null      # null: secure when the request is made over HTTPS; true or false to force it
 ```
+
+#### Cookie flags
+
+- `samesite` defaults to `lax`, so the cookie is sent when a visitor follows a link to your site but not on cross-site subrequests. Browsers ignore `samesite: 'none'` unless the cookie is also secure.
+- `secure` defaults to `null`: the cookie gets the Secure flag when the current request is made over HTTPS. Behind a reverse proxy that terminates TLS, configure Symfony's [trusted proxies](https://symfony.com/doc/current/deployment/proxies.html) so the request is seen as HTTPS. Set `true` or `false` to force the flag.
+- `httponly` defaults to `false` so that front-end JavaScript can read the utm values. Set it to `true` if only the server reads them.
 
 ## License
 

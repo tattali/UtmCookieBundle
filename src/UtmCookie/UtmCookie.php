@@ -53,13 +53,21 @@ class UtmCookie implements ResetInterface
 
     /**
      * If cookie should be secured (same as $secure parameter in setcookie PHP function).
+     * Null means secured when the request is made over HTTPS.
      */
-    private bool $secure = false;
+    private ?bool $secure = null;
 
     /**
      * If cookie should be http only (same as $httponly parameter in setcookie PHP function).
      */
     private bool $httpOnly = false;
+
+    /**
+     * SameSite attribute of the cookie: "lax", "strict", "none" or null to omit it.
+     *
+     * @var Cookie::SAMESITE_*|null
+     */
+    private ?string $sameSite = Cookie::SAMESITE_LAX;
 
     /**
      * Cookie to add to the response of the current request.
@@ -81,7 +89,7 @@ class UtmCookie implements ResetInterface
     public function clear(): void
     {
         $this->utmCookie = array_fill_keys(self::UTM_KEYS, null);
-        $this->sendCookie(new Cookie($this->utmCookieName, null, 1, $this->path, $this->domain ?: null, $this->secure, $this->httpOnly, false, null));
+        $this->sendCookie($this->createCookie(null, 1));
     }
 
     /**
@@ -139,7 +147,7 @@ class UtmCookie implements ResetInterface
         $this->utmCookie = $utmCookieSave;
 
         if ([] !== $utmGet) {
-            $this->sendCookie(new Cookie($this->utmCookieName, (string) json_encode($utmCookieSave), time() + $this->lifetime, $this->path, $this->domain ?: null, $this->secure, $this->httpOnly, false, null));
+            $this->sendCookie($this->createCookie((string) json_encode($utmCookieSave), time() + $this->lifetime));
         }
     }
 
@@ -234,9 +242,22 @@ class UtmCookie implements ResetInterface
     }
 
     /**
-     * Set secure for cookie.
+     * Set the SameSite attribute of the cookie: "lax", "strict", "none" or null to omit it.
      */
-    public function setSecure(bool $secure): void
+    public function setSameSite(?string $sameSite): void
+    {
+        $sameSite = null === $sameSite ? null : strtolower($sameSite);
+        if (!\in_array($sameSite, [Cookie::SAMESITE_LAX, Cookie::SAMESITE_STRICT, Cookie::SAMESITE_NONE, null], true)) {
+            throw new \UnexpectedValueException(\sprintf('SameSite has unexpected value "%s". Value must be "lax", "strict", "none" or null.', $sameSite));
+        }
+
+        $this->sameSite = $sameSite;
+    }
+
+    /**
+     * Set secure for cookie, or null to secure it when the request is made over HTTPS.
+     */
+    public function setSecure(?bool $secure): void
     {
         $this->secure = $secure;
     }
@@ -266,6 +287,23 @@ class UtmCookie implements ResetInterface
     private static function sanitize(string $value): string
     {
         return str_replace(["'", '"'], ['&#39;', '&#34;'], strip_tags($value));
+    }
+
+    private function createCookie(?string $value, int $expire): Cookie
+    {
+        return new Cookie($this->utmCookieName, $value, $expire, $this->path, $this->domain ?: null, $this->secure ?? $this->isSecureRequest(), $this->httpOnly, false, $this->sameSite);
+    }
+
+    private function isSecureRequest(): bool
+    {
+        $request = $this->requestStack?->getMainRequest();
+        if ($request instanceof Request) {
+            return $request->isSecure();
+        }
+
+        $https = $_SERVER['HTTPS'] ?? null;
+
+        return \is_scalar($https) && \in_array(strtolower((string) $https), ['on', '1'], true);
     }
 
     private function sendCookie(Cookie $cookie): void
