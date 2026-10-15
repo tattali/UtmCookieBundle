@@ -134,6 +134,34 @@ final class UtmCookieTest extends TestCase
         self::assertTrue($cookie->isCleared());
     }
 
+    public function testGetReturnsNullValuesAfterClear(): void
+    {
+        $request = Request::create('/', 'GET', ['utm_source' => 'ads'], ['utm' => json_encode(['utm_campaign' => 'spring'])]);
+        $utmCookie = $this->createUtmCookie($request);
+        self::assertSame('ads', $utmCookie->get('source'));
+
+        $utmCookie->clear();
+
+        self::assertSame(self::EMPTY_VALUES, $utmCookie->get());
+        $utmCookie->init();
+        $cookie = $this->sendResponse($utmCookie);
+        self::assertInstanceOf(Cookie::class, $cookie);
+        self::assertTrue($cookie->isCleared(), 'A later get() or init() must not write the values back.');
+    }
+
+    public function testGetReturnsNullValuesWhenClearedBeforeInit(): void
+    {
+        $request = Request::create('/', 'GET', ['utm_source' => 'ads'], ['utm' => json_encode(['utm_campaign' => 'spring'])]);
+        $utmCookie = $this->createUtmCookie($request);
+
+        $utmCookie->clear();
+
+        self::assertSame(self::EMPTY_VALUES, $utmCookie->get());
+        $cookie = $this->sendResponse($utmCookie);
+        self::assertInstanceOf(Cookie::class, $cookie);
+        self::assertTrue($cookie->isCleared());
+    }
+
     public function testOnKernelRequestInitializesOnMainRequestOnly(): void
     {
         $request = Request::create('/', 'GET', ['utm_source' => 'ads']);
