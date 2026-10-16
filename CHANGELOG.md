@@ -1,8 +1,8 @@
 Changelog
 =========
 
-Unreleased
-----------
+8.0.0
+-----
 
 - The cookie now gets `SameSite=Lax` by default. Use the new `samesite` option to choose
   `lax`, `strict`, `none`, or `null` to leave the attribute out
@@ -11,13 +11,13 @@ Unreleased
 - The cookie removed by `clear()` uses the same flags, and `get()` returns null values
   until the next request
 
-### Upgrading from 7.0
+### Upgrading from 7.x
 
 - Browsers no longer send the cookie on cross-site subrequests (iframes, images, POST forms from
   other sites). Set `samesite: none` (with `secure: true`) if you relied on that.
 - On HTTPS sites the cookie is now Secure. Behind a reverse proxy that terminates TLS, configure
   Symfony's trusted proxies, or set `secure: true`, so the request is seen as HTTPS.
-- To keep the 7.0 behaviour, set `samesite: null` and `secure: false`.
+- To keep the 7.x behaviour, set `samesite: null` and `secure: false`.
 
 7.0.0
 -----
