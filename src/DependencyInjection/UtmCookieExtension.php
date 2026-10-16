@@ -27,6 +27,7 @@ class UtmCookieExtension extends Extension
             ->addMethodCall('setOverwrite', [$config['overwrite']])
             ->addMethodCall('setSecure', [$config['secure']])
             ->addMethodCall('setHttpOnly', [$config['httponly']])
+            ->addMethodCall('setSameSite', [$config['samesite']])
             ->addTag('kernel.event_listener', ['event' => 'kernel.response', 'method' => 'onKernelResponse'])
             ->addTag('kernel.reset', ['method' => 'reset'])
         ;
