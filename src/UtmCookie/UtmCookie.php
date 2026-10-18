@@ -79,7 +79,7 @@ class UtmCookie
      *
      * @return string|array|null return string value, array or null if not set
      */
-    public function get(string $key = null)
+    public function get(?string $key = null)
     {
         $this->init();
 
@@ -245,7 +245,7 @@ class UtmCookie
      *
      * @return array
      */
-    private static function removeNullValues(array $array = null)
+    private static function removeNullValues(?array $array = null)
     {
         // null (undefined) or false (filter failed)
         if (null === $array || false === $array) {
