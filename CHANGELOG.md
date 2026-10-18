@@ -7,6 +7,7 @@ Changelog
 - Support Symfony 7 only; Symfony 6.4 is covered by the 6.x versions and Symfony 8 by the 8.x versions
 - Require PHP 8.2 or later, as Symfony 7 does
 - `clear()` also forgets the utm values kept in memory, so `get()` returns null values until the next request
+- The utm values are sanitized exactly as the removed `FILTER_SANITIZE_STRING` filter did: a `<` followed by a space also starts a tag (`1 < 2` gives `1 `), and quotes are encoded before the tags are stripped (`<a title=">">x` gives `&#34;>x`)
 
 The 7.x versions get bug fixes only.
 

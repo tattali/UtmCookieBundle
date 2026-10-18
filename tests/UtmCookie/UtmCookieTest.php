@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace UtmCookieBundle\Tests\UtmCookie;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\Cookie;
 use Symfony\Component\HttpFoundation\Request;
@@ -106,6 +107,54 @@ final class UtmCookieTest extends TestCase
 
         self::assertSame('alert(1)&#34;ads&#39;', $utmCookie->get('source'));
         self::assertNull($utmCookie->get('term'));
+    }
+
+    /**
+     * Outputs of the FILTER_SANITIZE_STRING filter that strip_tags() alone does not give: a "<"
+     * followed by a space starts a tag, and quotes are encoded before the tags are stripped.
+     */
+    #[DataProvider('provideValuesTheRemovedFilterSanitizedDifferentlyFromStripTags')]
+    public function testValuesAreSanitizedAsTheRemovedFilterDid(string $value, string $expected): void
+    {
+        $utmCookie = $this->createUtmCookie(Request::create('/', 'GET', ['utm_source' => $value]));
+
+        self::assertSame($expected, $utmCookie->get('source'));
+    }
+
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function provideValuesTheRemovedFilterSanitizedDifferentlyFromStripTags(): iterable
+    {
+        yield 'less-than sign followed by a space' => ['1 < 2', '1 '];
+        yield 'tag opened with a space' => ['< b>x', 'x'];
+        yield 'quoted ">" in an attribute' => ['<a title=">">x', '&#34;>x'];
+    }
+
+    /**
+     * The values are sanitized as FILTER_SANITIZE_STRING did before PHP 8.1 deprecated it:
+     * compare both on many generated strings, wherever PHP still has the filter.
+     */
+    public function testSanitizeGivesTheSameResultAsTheDeprecatedFilter(): void
+    {
+        if (!\defined('FILTER_SANITIZE_STRING')) {
+            self::markTestSkipped('This PHP version no longer has FILTER_SANITIZE_STRING.');
+        }
+        // silenced: the constant is deprecated since PHP 8.1
+        $filter = @\constant('FILTER_SANITIZE_STRING');
+        $sanitize = \Closure::bind(static fn (string $value): string => UtmCookie::sanitize($value), null, UtmCookie::class);
+
+        $pieces = ['<', '>', ' ', "\t", "\n", "\x0B", "\f", "\r", "\0", "\xA0", '"', "'", '!', '?', '-', '/', '=', '&', '\\', 'a', 'é', '<!--', '-->', '<?', '?>', '<b>', '</b>', '<script>'];
+        // seeded, so every run checks the same strings
+        $randomizer = new \Random\Randomizer(new \Random\Engine\Mt19937(42));
+        for ($i = 0; $i < 20000; ++$i) {
+            $value = '';
+            for ($length = $randomizer->getInt(0, 12); $length > 0; --$length) {
+                $value .= $pieces[$randomizer->getInt(0, \count($pieces) - 1)];
+            }
+
+            self::assertSame(@filter_var($value, $filter), $sanitize($value), 'Input: '.json_encode(bin2hex($value)));
+        }
     }
 
     public function testInvalidCookieIsIgnored(): void
