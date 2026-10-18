@@ -114,7 +114,7 @@ final class UtmCookieExtensionTest extends TestCase
 
     public function testBundleProvidesTheExtension(): void
     {
-        $extension = (new UtmCookieBundle())->getContainerExtension();
+        $extension = new UtmCookieBundle()->getContainerExtension();
 
         self::assertInstanceOf(UtmCookieExtension::class, $extension);
         self::assertSame('utm_cookie', $extension->getAlias());
@@ -151,7 +151,7 @@ final class UtmCookieExtensionTest extends TestCase
     private function load(array $configs): ContainerBuilder
     {
         $container = new ContainerBuilder();
-        (new UtmCookieExtension())->load($configs, $container);
+        new UtmCookieExtension()->load($configs, $container);
 
         return $container;
     }

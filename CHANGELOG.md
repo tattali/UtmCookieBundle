@@ -1,6 +1,22 @@
 Changelog
 =========
 
+8.1.0
+-----
+
+- Support Symfony 8 only. Symfony 7 is covered by the 7.x versions, Symfony 6.4 by the 6.x
+  versions and Symfony 5.4 by the 5.x versions
+- Require PHP 8.4 or later, as Symfony 8 does
+
+### Upgrading
+
+7.0.0 and 8.0.0 also allow Symfony 6.4 and 7, and 6.0.0 allows Symfony 5, so Composer does not
+pick the line of your Symfony version by itself. Require that line explicitly:
+
+- Symfony 7: `composer require tattali/utm-cookie-bundle:^7.1`
+- Symfony 6.4: `composer require tattali/utm-cookie-bundle:^6.1`
+- Symfony 5.4: `composer require tattali/utm-cookie-bundle:^5.0`
+
 8.0.0
 -----
 

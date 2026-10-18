@@ -110,7 +110,7 @@ final class UtmCookieTest extends TestCase
     public function testInvalidSameSiteThrows(): void
     {
         $this->expectException(\UnexpectedValueException::class);
-        (new UtmCookie())->setSameSite('sometimes');
+        new UtmCookie()->setSameSite('sometimes');
     }
 
     public function testCookieIsSecureOnHttpsByDefault(): void
@@ -284,7 +284,7 @@ final class UtmCookieTest extends TestCase
         $_COOKIE = ['utm' => json_encode(['utm_medium' => 'email'])];
 
         try {
-            self::assertSame(array_merge(self::EMPTY_VALUES, ['utm_medium' => 'email']), (new UtmCookie())->get());
+            self::assertSame(array_merge(self::EMPTY_VALUES, ['utm_medium' => 'email']), new UtmCookie()->get());
         } finally {
             $_GET = $get;
             $_COOKIE = $cookies;
@@ -294,13 +294,13 @@ final class UtmCookieTest extends TestCase
     public function testInvalidLifetimeThrows(): void
     {
         $this->expectException(\UnexpectedValueException::class);
-        (new UtmCookie())->setLifetime(0);
+        new UtmCookie()->setLifetime(0);
     }
 
     public function testEmptyNameThrows(): void
     {
         $this->expectException(\UnexpectedValueException::class);
-        (new UtmCookie())->setName(' ');
+        new UtmCookie()->setName(' ');
     }
 
     private function createUtmCookie(Request $request): UtmCookie
