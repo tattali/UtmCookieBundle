@@ -9,5 +9,6 @@ Changelog
 - Fix the PHP 8.4 deprecation of the implicitly nullable `$key` argument of `get()`
 - Declare the `TreeBuilder` return type of `Configuration::getConfigTreeBuilder()`
 - Add a test that boots a kernel with the bundle; replace Travis CI with GitHub Actions
+- `clear()` also forgets the utm values kept in memory, so `get()` returns null values until the next request
 
 The 6.x versions get bug fixes only.

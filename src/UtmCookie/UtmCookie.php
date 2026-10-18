@@ -65,10 +65,11 @@ class UtmCookie
     private $httpOnly = false;
 
     /**
-     * Remove utmCookie.
+     * Remove utmCookie. Until the next request, get() returns null values.
      */
     public function clear()
     {
+        $this->initStaticValues();
         setcookie($this->utmCookieName, '', -1, $this->path, $this->domain, $this->secure, $this->httpOnly);
     }
 
