@@ -22,7 +22,11 @@ set_error_handler(static function (int $type, string $message, string $file, int
 });
 
 try {
-    $path = explode('/', trim((string) parse_url($_SERVER['REQUEST_URI'], \PHP_URL_PATH), '/'));
+    $uri = $_SERVER['REQUEST_URI'] ?? null;
+    if (!\is_string($uri)) {
+        throw new \LogicException('The request has no URI.');
+    }
+    $path = explode('/', trim((string) parse_url($uri, \PHP_URL_PATH), '/'));
 
     $utmCookie = new UtmCookie();
     $utmCookie->setName('utm');
@@ -39,7 +43,7 @@ try {
             $result = $utmCookie->get();
             break;
         default:
-            throw new \LogicException('Unknown path '.$_SERVER['REQUEST_URI']);
+            throw new \LogicException('Unknown path '.$uri);
     }
 
     header('Content-Type: application/json');

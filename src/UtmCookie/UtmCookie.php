@@ -18,7 +18,9 @@ class UtmCookie
     private $utmCookieName;
 
     /**
-     * @var array
+     * The utm values, null until init() reads them.
+     *
+     * @var array<array-key, array<mixed>|string|false|null>|null
      */
     private $utmCookie;
 
@@ -66,10 +68,12 @@ class UtmCookie
 
     /**
      * Remove utmCookie. Until the next request, get() returns null values.
+     *
+     * @return void
      */
     public function clear()
     {
-        $this->initStaticValues();
+        $this->utmCookie = self::defaultValues();
         setcookie($this->utmCookieName, '', -1, $this->path, $this->domain, $this->secure, $this->httpOnly);
     }
 
@@ -78,7 +82,7 @@ class UtmCookie
      *
      * @param string|null $key default null (return all values as array)
      *
-     * @return string|array|null return string value, array or null if not set
+     * @return array<mixed>|string|false|null return string value, array, null if not set or false if not a string
      */
     public function get(?string $key = null)
     {
@@ -99,6 +103,10 @@ class UtmCookie
 
     /**
      * Initialize. Get values from _GET and _COOKIES and save to UtmCookie. Init $this->utmCookie value.
+     *
+     * @return void
+     *
+     * @phpstan-assert !null $this->utmCookie
      */
     public function init()
     {
@@ -107,7 +115,7 @@ class UtmCookie
             return;
         }
 
-        $this->initStaticValues();
+        $defaultValues = self::defaultValues();
         // utm from _COOKIE
         $utmCookieFilter = filter_var(
             json_decode((string) filter_input(INPUT_COOKIE, $this->utmCookieName), true),
@@ -117,36 +125,24 @@ class UtmCookie
         if (!\is_array($utmCookieFilter)) {
             $utmCookieFilter = [];
         }
-        array_walk_recursive($utmCookieFilter, function (&$value) {
+        // the filter turns every value into a string
+        array_walk_recursive($utmCookieFilter, function (string &$value) {
             $value = self::sanitize($value);
         });
-        $utmCookie = $this->removeNullValues($utmCookieFilter);
+        $utmCookie = self::removeNullValues($utmCookieFilter);
         // utm from _GET
-        $utmGetFilter = filter_input_array(
-            INPUT_GET,
-            [
-                'utm_campaign' => FILTER_UNSAFE_RAW,
-                'utm_medium' => FILTER_UNSAFE_RAW,
-                'utm_source' => FILTER_UNSAFE_RAW,
-                'utm_term' => FILTER_UNSAFE_RAW,
-                'utm_content' => FILTER_UNSAFE_RAW,
-            ]
-        );
-        if (!\is_array($utmGetFilter)) {
-            $utmGetFilter = [];
-        }
-        foreach ($utmGetFilter as $key => $value) {
+        $utmGetFilter = [];
+        foreach (['utm_campaign', 'utm_medium', 'utm_source', 'utm_term', 'utm_content'] as $key) {
             // null: not in the query string, false: not a string
-            if (\is_string($value)) {
-                $utmGetFilter[$key] = self::sanitize($value);
-            }
+            $value = filter_input(INPUT_GET, $key, FILTER_UNSAFE_RAW);
+            $utmGetFilter[$key] = \is_string($value) ? self::sanitize($value) : $value;
         }
-        $utmGet = $this->removeNullValues($utmGetFilter);
+        $utmGet = self::removeNullValues($utmGetFilter);
 
         if (0 !== \count($utmGet) && $this->overwrite) {
-            $utmCookieSave = array_merge($this->utmCookie, $utmGet);
+            $utmCookieSave = array_merge($defaultValues, $utmGet);
         } else {
-            $utmCookieSave = array_merge($this->utmCookie, $utmCookie, $utmGet);
+            $utmCookieSave = array_merge($defaultValues, $utmCookie, $utmGet);
         }
         if (0 !== \count($utmGet)) {
             $this->save($utmCookieSave);
@@ -159,6 +155,8 @@ class UtmCookie
      * onKernelRequest called if autoInit is true.
      *
      * @param RequestEvent $event
+     *
+     * @return void
      */
     public function onKernelRequest(RequestEvent $event)
     {
@@ -171,6 +169,8 @@ class UtmCookie
 
     /**
      * Set domain for cookie.
+     *
+     * @return void
      */
     public function setDomain(string $domain)
     {
@@ -179,6 +179,8 @@ class UtmCookie
 
     /**
      * Set httponly for cookie.
+     *
+     * @return void
      */
     public function setHttpOnly(bool $httpOnly)
     {
@@ -187,6 +189,8 @@ class UtmCookie
 
     /**
      * Set lifetime of utm cookie in seconds.
+     *
+     * @return void
      */
     public function setLifetime(int $lifetime)
     {
@@ -198,6 +202,8 @@ class UtmCookie
 
     /**
      * Set name of cookie where will be saved utm params.
+     *
+     * @return void
      */
     public function setName(string $utmCookieName)
     {
@@ -212,6 +218,8 @@ class UtmCookie
 
     /**
      * Set if even one utm value in _GET will overwrite all utm values or not.
+     *
+     * @return void
      */
     public function setOverwrite(bool $overwrite)
     {
@@ -222,6 +230,8 @@ class UtmCookie
 
     /**
      * Set path for cookie.
+     *
+     * @return void
      */
     public function setPath(string $path)
     {
@@ -230,6 +240,8 @@ class UtmCookie
 
     /**
      * Set secure for cookie.
+     *
+     * @return void
      */
     public function setSecure(bool $secure)
     {
@@ -237,11 +249,13 @@ class UtmCookie
     }
 
     /**
-     * Initialize static values to default (or empty) values.
+     * Default (empty) utm values.
+     *
+     * @return array<string, null>
      */
-    private function initStaticValues()
+    private static function defaultValues(): array
     {
-        $this->utmCookie = [
+        return [
             'utm_campaign' => null,
             'utm_medium' => null,
             'utm_source' => null,
@@ -253,12 +267,16 @@ class UtmCookie
     /**
      * Remove elements with null values from array.
      *
-     * @return array
+     * @template T
+     *
+     * @param array<T|null>|null $array
+     *
+     * @return array<T>
      */
-    private static function removeNullValues(?array $array = null)
+    private static function removeNullValues(?array $array = null): array
     {
-        // null (undefined) or false (filter failed)
-        if (null === $array || false === $array) {
+        // null (undefined)
+        if (null === $array) {
             return [];
         }
 
@@ -290,8 +308,10 @@ class UtmCookie
 
     /**
      * Save utmCookie value into _COOKIE and set actual $this->utmCookie value (call only from init).
+     *
+     * @param array<array-key, array<mixed>|string|false|null> $utmCookieSave
      */
-    private function save(array $utmCookieSave)
+    private function save(array $utmCookieSave): void
     {
         $expire = (new DateTime())->getTimestamp() + $this->lifetime;
 

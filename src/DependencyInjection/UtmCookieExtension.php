@@ -12,6 +12,11 @@ use UtmCookieBundle\UtmCookie\UtmCookie;
 
 class UtmCookieExtension extends Extension
 {
+    /**
+     * @param array<mixed> $configs
+     *
+     * @return void
+     */
     public function load(array $configs, ContainerBuilder $container)
     {
         $loader = new XmlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
