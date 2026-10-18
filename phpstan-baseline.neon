@@ -1,7 +1,0 @@
-parameters:
-	ignoreErrors:
-		-
-			message: '#^Use of constant FILTER_SANITIZE_STRING is deprecated\.$#'
-			identifier: constant.deprecated
-			count: 6
-			path: src/UtmCookie/UtmCookie.php

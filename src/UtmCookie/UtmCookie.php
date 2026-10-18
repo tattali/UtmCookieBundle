@@ -111,26 +111,35 @@ class UtmCookie
         // utm from _COOKIE
         $utmCookieFilter = filter_var(
             json_decode((string) filter_input(INPUT_COOKIE, $this->utmCookieName), true),
-            FILTER_SANITIZE_STRING,
+            FILTER_UNSAFE_RAW,
             FILTER_REQUIRE_ARRAY
         );
         if (!\is_array($utmCookieFilter)) {
             $utmCookieFilter = [];
         }
+        array_walk_recursive($utmCookieFilter, function (&$value) {
+            $value = self::sanitize($value);
+        });
         $utmCookie = $this->removeNullValues($utmCookieFilter);
         // utm from _GET
         $utmGetFilter = filter_input_array(
             INPUT_GET,
             [
-                'utm_campaign' => FILTER_SANITIZE_STRING,
-                'utm_medium' => FILTER_SANITIZE_STRING,
-                'utm_source' => FILTER_SANITIZE_STRING,
-                'utm_term' => FILTER_SANITIZE_STRING,
-                'utm_content' => FILTER_SANITIZE_STRING,
+                'utm_campaign' => FILTER_UNSAFE_RAW,
+                'utm_medium' => FILTER_UNSAFE_RAW,
+                'utm_source' => FILTER_UNSAFE_RAW,
+                'utm_term' => FILTER_UNSAFE_RAW,
+                'utm_content' => FILTER_UNSAFE_RAW,
             ]
         );
         if (!\is_array($utmGetFilter)) {
             $utmGetFilter = [];
+        }
+        foreach ($utmGetFilter as $key => $value) {
+            // null: not in the query string, false: not a string
+            if (\is_string($value)) {
+                $utmGetFilter[$key] = self::sanitize($value);
+            }
         }
         $utmGet = $this->removeNullValues($utmGetFilter);
 
@@ -259,6 +268,24 @@ class UtmCookie
                 return null !== $value;
             }
         );
+    }
+
+    /**
+     * Strip tags and encode quotes, as the removed FILTER_SANITIZE_STRING filter did.
+     *
+     * The quotes are encoded first, and a "<" followed by a space also starts a tag, so the result
+     * is the same as the filter's for any string.
+     */
+    private static function sanitize(string $value): string
+    {
+        $value = str_replace(["'", '"'], ['&#39;', '&#34;'], $value);
+        // strip_tags() keeps a "<" followed by a space as text, where the filter started a tag:
+        // a letter after the "<" makes strip_tags() start the tag too
+        $value = preg_replace_callback('/<(?=(.))/s', function (array $match) {
+            return ctype_space($match[1]) ? '<x' : '<';
+        }, $value);
+
+        return strip_tags((string) $value);
     }
 
     /**
