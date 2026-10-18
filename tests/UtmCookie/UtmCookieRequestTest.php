@@ -143,6 +143,16 @@ final class UtmCookieRequestTest extends TestCase
         self::assertSame(array_merge(self::EMPTY_VALUES, ['utm_source' => false]), $response['body']);
     }
 
+    public function testAValueJsonCannotEncodeEmptiesTheCookieInsteadOfFailing(): void
+    {
+        // "\xFF" is not UTF-8, so json_encode() cannot write the cookie
+        $response = $this->request('/overwrite/get/medium?utm_source=a%FFb&utm_medium=email', ['utm_campaign' => 'spring']);
+
+        self::assertSame('email', $response['body']);
+        self::assertCount(1, $response['cookies']);
+        self::assertStringStartsWith('utm=deleted; ', $response['cookies'][0]);
+    }
+
     public function testGetReturnsOneValueByItsKeyWithOrWithoutThePrefix(): void
     {
         self::assertSame('google', $this->request('/overwrite/get/source?utm_source=google')['body']);
