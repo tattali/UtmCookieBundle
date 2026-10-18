@@ -1,8 +1,6 @@
-includes:
-    - phpstan-baseline.neon
-
 parameters:
     level: 1
+    phpVersion: 80100 # the lowest PHP version this branch supports
     tmpDir: .phpstan
     paths:
         - src
