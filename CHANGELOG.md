@@ -1,6 +1,14 @@
 Changelog
 =========
 
+7.1.0
+-----
+
+- Support Symfony 7 only; Symfony 6.4 is covered by the 6.x versions and Symfony 8 by the 8.x versions
+- Require PHP 8.2 or later, as Symfony 7 does
+
+The 7.x versions get bug fixes only.
+
 7.0.0
 -----
 
