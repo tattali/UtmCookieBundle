@@ -81,7 +81,7 @@ class UtmCookie implements ResetInterface
     public function clear(): void
     {
         $this->utmCookie = array_fill_keys(self::UTM_KEYS, null);
-        $this->sendCookie(new Cookie($this->utmCookieName, null, 1, $this->path, $this->domain ?: null, $this->secure, $this->httpOnly, false, null));
+        $this->sendCookie(new Cookie($this->utmCookieName, null, 1, $this->path, $this->cookieDomain(), $this->secure, $this->httpOnly, false, null));
     }
 
     /**
@@ -139,7 +139,7 @@ class UtmCookie implements ResetInterface
         $this->utmCookie = $utmCookieSave;
 
         if ([] !== $utmGet) {
-            $this->sendCookie(new Cookie($this->utmCookieName, (string) json_encode($utmCookieSave), time() + $this->lifetime, $this->path, $this->domain ?: null, $this->secure, $this->httpOnly, false, null));
+            $this->sendCookie(new Cookie($this->utmCookieName, (string) json_encode($utmCookieSave), time() + $this->lifetime, $this->path, $this->cookieDomain(), $this->secure, $this->httpOnly, false, null));
         }
     }
 
@@ -274,6 +274,14 @@ class UtmCookie implements ResetInterface
         $value = preg_replace_callback('/<(?=(.))/s', static fn (array $match): string => ctype_space($match[1]) ? '<x' : '<', $value);
 
         return strip_tags((string) $value);
+    }
+
+    /**
+     * The domain of the cookie, null when none is set ("" and "0" mean none, as before).
+     */
+    private function cookieDomain(): ?string
+    {
+        return '' === $this->domain || '0' === $this->domain ? null : $this->domain;
     }
 
     private function sendCookie(Cookie $cookie): void
