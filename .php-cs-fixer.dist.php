@@ -2,20 +2,25 @@
 
 declare(strict_types=1);
 
-$finder = PhpCsFixer\Finder::create()
-    ->in(__DIR__.'/src')
-    ->in(__DIR__.'/tests')
+use PhpCsFixer\Config;
+use PhpCsFixer\Finder;
+use PhpCsFixer\Runner\Parallel\ParallelConfigFactory;
+
+$finder = (new Finder())
+    ->in([__DIR__.'/src', __DIR__.'/tests'])
+    ->append([__FILE__])
 ;
 
-return (new PhpCsFixer\Config())
+return (new Config())
     ->setRiskyAllowed(true)
+    ->setParallelConfig(ParallelConfigFactory::detect())
     ->setRules([
-        '@PER-CS' => true,
-        '@PER-CS:risky' => true,
-        '@PHP81Migration' => true,
-        '@PHP80Migration:risky' => true,
+        // PER-CS plus the PHP and PHPUnit migration rules for the versions in composer.json
+        '@auto' => true,
+        '@auto:risky' => true,
         '@Symfony' => true,
         '@Symfony:risky' => true,
+        // @Symfony:risky removes it since php-cs-fixer 3.95
         'declare_strict_types' => true,
         'no_useless_else' => true,
         'no_useless_return' => true,
@@ -26,6 +31,8 @@ return (new PhpCsFixer\Config())
         ],
         'php_unit_method_casing' => ['case' => 'camel_case'],
         'php_unit_test_class_requires_covers' => false,
+        'phpdoc_order' => true,
+        'single_line_comment_style' => true,
         'strict_comparison' => true,
         'strict_param' => true,
     ])
