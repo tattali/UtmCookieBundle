@@ -52,12 +52,12 @@ return (new PhpCsFixer\Config())
         'no_useless_return' => true,
         'ordered_class_elements' => true,
         'ordered_imports' => [
-            'importsOrder' => [
+            'imports_order' => [
                 'class',
                 'function',
                 'const',
             ],
-            'sortAlgorithm' => 'alpha',
+            'sort_algorithm' => 'alpha',
         ],
         'php_unit_method_casing' => [
             'case' => 'camel_case',
