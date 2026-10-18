@@ -1,5 +1,6 @@
 parameters:
-    level: 8
+    level: max
+    phpVersion: 80400 # the lowest PHP version this branch supports
     tmpDir: .phpstan
     paths:
         - src
