@@ -1,6 +1,15 @@
 UtmCookieBundle
 ===============
 
+[![CI](https://img.shields.io/github/actions/workflow/status/tattali/UtmCookieBundle/ci.yml?branch=main&label=CI)](https://github.com/tattali/UtmCookieBundle/actions/workflows/ci.yml?query=branch%3Amain)
+[![Quality Gate](https://img.shields.io/sonar/quality_gate/tattali_UtmCookieBundle?server=https%3A%2F%2Fsonarcloud.io)](https://sonarcloud.io/summary/new_code?id=tattali_UtmCookieBundle)
+[![Coverage](https://img.shields.io/sonar/coverage/tattali_UtmCookieBundle?server=https%3A%2F%2Fsonarcloud.io)](https://sonarcloud.io/summary/new_code?id=tattali_UtmCookieBundle)
+[![Latest Version](https://img.shields.io/packagist/v/tattali/utm-cookie-bundle)](https://packagist.org/packages/tattali/utm-cookie-bundle)
+[![Downloads](https://img.shields.io/packagist/dt/tattali/utm-cookie-bundle)](https://packagist.org/packages/tattali/utm-cookie-bundle/stats)
+[![PHP](https://img.shields.io/packagist/dependency-v/tattali/utm-cookie-bundle/php)](https://packagist.org/packages/tattali/utm-cookie-bundle)
+[![Symfony](https://img.shields.io/packagist/dependency-v/tattali/utm-cookie-bundle/symfony/http-kernel?label=symfony)](https://packagist.org/packages/tattali/utm-cookie-bundle)
+[![License](https://img.shields.io/packagist/l/tattali/utm-cookie-bundle)](LICENSE)
+
 This bundle allow you to save utm parameters from url into a cookie when they exists. It's also provide a bunch of tools to easily retrive all or each utm.
 
 * Symfony 6.4, 7.x or 8.x
