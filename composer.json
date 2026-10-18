@@ -22,9 +22,11 @@
         "symfony/dependency-injection": "^8.0",
         "symfony/http-foundation": "^8.0",
         "symfony/http-kernel": "^8.0",
+        "symfony/polyfill-ctype": "^1.8",
         "symfony/service-contracts": "^2.5 || ^3.0"
     },
     "require-dev": {
+        "ext-filter": "*",
         "friendsofphp/php-cs-fixer": "^3.90",
         "phpstan/extension-installer": "^1.4",
         "phpstan/phpstan": "^2.0",

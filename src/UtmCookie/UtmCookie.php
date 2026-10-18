@@ -283,10 +283,18 @@ class UtmCookie implements ResetInterface
 
     /**
      * Strip tags and encode quotes, as the removed FILTER_SANITIZE_STRING filter did.
+     *
+     * The quotes are encoded first, and a "<" followed by a space also starts a tag, so the result
+     * is the same as the filter's for any string.
      */
     private static function sanitize(string $value): string
     {
-        return str_replace(["'", '"'], ['&#39;', '&#34;'], strip_tags($value));
+        $value = str_replace(["'", '"'], ['&#39;', '&#34;'], $value);
+        // strip_tags() keeps a "<" followed by a space as text, where the filter started a tag:
+        // a letter after the "<" makes strip_tags() start the tag too
+        $value = preg_replace_callback('/<(?=(.))/s', static fn (array $match): string => ctype_space($match[1]) ? '<x' : '<', $value);
+
+        return strip_tags((string) $value);
     }
 
     private function createCookie(?string $value, int $expire): Cookie
