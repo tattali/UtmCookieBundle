@@ -164,7 +164,8 @@ final class UtmCookieRequestTest extends TestCase
 
         self::assertSame(self::EMPTY_VALUES, $response['body']);
         self::assertCount(1, $response['cookies']);
-        self::assertStringStartsWith('utm=deleted; expires=Thu, 01 Jan 1970 00:00:01 GMT; Max-Age=0; path=/', $response['cookies'][0]);
+        // the date format of the expires attribute depends on the PHP version
+        self::assertMatchesRegularExpression('#^utm=deleted; expires=Thu, 01.Jan.1970 00:00:01 GMT; Max-Age=0; path=/#', $response['cookies'][0]);
     }
 
     /**
