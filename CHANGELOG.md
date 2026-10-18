@@ -10,5 +10,6 @@ Changelog
 - Fix the PHP 8.4 deprecation of the implicitly nullable `$key` argument of `get()`
 - Declare the `TreeBuilder` return type of `Configuration::getConfigTreeBuilder()`
 - Add a test that boots a kernel with the bundle; replace Travis CI with GitHub Actions
+- Fix the PHP 8.1 deprecation of `FILTER_SANITIZE_STRING`: the utm values are sanitized by the bundle, with the same result
 
 The 5.x versions get security fixes only.
