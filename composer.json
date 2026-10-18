@@ -28,6 +28,7 @@
     "require-dev": {
         "ext-filter": "*",
         "friendsofphp/php-cs-fixer": "^3.90",
+        "infection/infection": "^0.35",
         "phpstan/extension-installer": "^1.4",
         "phpstan/phpstan": "^2.0",
         "phpstan/phpstan-deprecation-rules": "^2.0",
@@ -49,7 +50,8 @@
     "config": {
         "sort-packages": true,
         "allow-plugins": {
-            "phpstan/extension-installer": true
+            "phpstan/extension-installer": true,
+            "infection/extension-installer": true
         }
     }
 }
