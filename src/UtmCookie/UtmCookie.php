@@ -294,7 +294,8 @@ class UtmCookie
     {
         $expire = (new DateTime())->getTimestamp() + $this->lifetime;
 
-        setcookie($this->utmCookieName, json_encode($utmCookieSave), $expire, $this->path, $this->domain, $this->secure, $this->httpOnly);
+        // json_encode() fails on a value that is not UTF-8: an empty value deletes the cookie
+        setcookie($this->utmCookieName, (string) json_encode($utmCookieSave), $expire, $this->path, $this->domain, $this->secure, $this->httpOnly);
 
         $this->utmCookie = $utmCookieSave;
     }
