@@ -297,9 +297,17 @@ class UtmCookie implements ResetInterface
         return strip_tags((string) $value);
     }
 
+    /**
+     * The domain of the cookie, null when none is set ("" and "0" mean none, as before).
+     */
+    private function cookieDomain(): ?string
+    {
+        return '' === $this->domain || '0' === $this->domain ? null : $this->domain;
+    }
+
     private function createCookie(?string $value, int $expire): Cookie
     {
-        return new Cookie($this->utmCookieName, $value, $expire, $this->path, $this->domain ?: null, $this->secure ?? $this->isSecureRequest(), $this->httpOnly, false, $this->sameSite);
+        return new Cookie($this->utmCookieName, $value, $expire, $this->path, $this->cookieDomain(), $this->secure ?? $this->isSecureRequest(), $this->httpOnly, false, $this->sameSite);
     }
 
     private function isSecureRequest(): bool
