@@ -3,3 +3,4 @@ parameters:
     tmpDir: .phpstan
     paths:
         - src
+        - tests

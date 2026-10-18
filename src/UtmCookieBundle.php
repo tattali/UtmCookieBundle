@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace UtmCookieBundle;
 
 use Symfony\Component\DependencyInjection\Extension\ExtensionInterface;
-use Symfony\Component\HttpKernel\Bundle\AbstractBundle;
+use Symfony\Component\HttpKernel\Bundle\Bundle;
 use UtmCookieBundle\DependencyInjection\UtmCookieExtension;
 
-class UtmCookieBundle extends AbstractBundle
+class UtmCookieBundle extends Bundle
 {
     public function getPath(): string
     {
