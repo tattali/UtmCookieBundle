@@ -12,5 +12,6 @@ Changelog
 - Add a test that boots a kernel with the bundle; replace Travis CI with GitHub Actions
 - Fix the PHP 8.1 deprecation of `FILTER_SANITIZE_STRING`: the utm values are sanitized by the bundle, with the same result
 - A utm value that is not UTF-8 (such as `?utm_source=a%FFb`) no longer makes the request fail with a `TypeError`: the cookie is deleted and the request keeps its utm values
+- Require the Symfony 5.4 components the bundle uses (`symfony/config`, `symfony/http-kernel`), so Symfony 6 components no longer install with it; also require `ext-filter`, `symfony/polyfill-ctype` and `symfony/polyfill-mbstring`
 
 The 5.x versions get security fixes only.
