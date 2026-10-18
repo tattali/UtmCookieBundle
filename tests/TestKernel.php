@@ -47,7 +47,7 @@ class TestKernel extends Kernel
 
     public function getCacheDir(): string
     {
-        return sys_get_temp_dir().'/utm-cookie-bundle/'.md5((string) json_encode($this->utmCookieConfig)).'/cache';
+        return sys_get_temp_dir().'/utm-cookie-bundle/'.md5(__DIR__.self::VERSION.json_encode($this->utmCookieConfig)).'/cache';
     }
 
     public function getLogDir(): string
