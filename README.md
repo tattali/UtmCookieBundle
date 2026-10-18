@@ -12,25 +12,33 @@ UtmCookieBundle
 
 This bundle allow you to save utm parameters from url into a cookie when they exists. It's also provide a bunch of tools to easily retrive all or each utm.
 
-Each major version of the bundle supports one Symfony major version. Composer installs the one that matches your application.
+Each major version of the bundle supports one Symfony major version. Require the version that
+matches your Symfony version:
 
-| Bundle | Symfony | PHP    | Branch | Maintenance         |
-|--------|---------|--------|--------|---------------------|
-| 8.x    | 8.x     | 8.4+   | `main` | new features        |
-| 7.x    | 7.x     | 8.2+   | `7.x`  | bug fixes           |
-| 6.x    | 6.4     | 8.1+   | `6.x`  | bug fixes           |
-| 5.x    | 5.4     | 7.2.5+ | `5.x`  | security fixes only |
+| Bundle | Symfony | PHP    | Install                                           | Branch | Maintenance         |
+|--------|---------|--------|---------------------------------------------------|--------|---------------------|
+| 8.x    | 8.x     | 8.4+   | `composer require tattali/utm-cookie-bundle`      | `main` | new features        |
+| 7.x    | 7.x     | 8.2+   | `composer require tattali/utm-cookie-bundle:^7.1` | `7.x`  | bug fixes           |
+| 6.x    | 6.4     | 8.1+   | `composer require tattali/utm-cookie-bundle:^6.1` | `6.x`  | bug fixes           |
+| 5.x    | 5.4     | 7.2.5+ | `composer require tattali/utm-cookie-bundle:^5.0` | `5.x`  | security fixes only |
 
-For older Symfony versions, use `tattali/utm-cookie-bundle:^6.0`. See the [changelog](CHANGELOG.md) when upgrading.
+The version constraint matters: 7.0.0 and 8.0.0 also allow Symfony 6.4 and 7, and 6.0.0 allows
+Symfony 5, so without it Composer can install a version that is not made for your Symfony version.
+
+For Symfony 3.4 to 5.3, use `tattali/utm-cookie-bundle:^1.1`. See the [changelog](CHANGELOG.md) when upgrading.
 
 Documentation
 -------------
 
 ### Installation
 
+On Symfony 8:
+
 ```
 $ composer require tattali/utm-cookie-bundle
 ```
+
+For an older Symfony version, use the command from the table above.
 
 ### Usage
 
