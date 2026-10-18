@@ -14,7 +14,7 @@ Documentation
 ### Installation
 
 ```
-$ composer require tattali/utm-cookie-bundle
+$ composer require tattali/utm-cookie-bundle:^5.0
 ```
 
 ### Usage
