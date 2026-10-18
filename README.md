@@ -12,8 +12,14 @@ UtmCookieBundle
 
 This bundle allow you to save utm parameters from url into a cookie when they exists. It's also provide a bunch of tools to easily retrive all or each utm.
 
-* Symfony 6.4, 7.x or 8.x
-* PHP 8.1+ (Symfony 7 needs PHP 8.2+, Symfony 8 needs PHP 8.4+)
+Each major version of the bundle supports one Symfony major version. Composer installs the one that matches your application.
+
+| Bundle | Symfony | PHP    | Branch | Maintenance         |
+|--------|---------|--------|--------|---------------------|
+| 8.x    | 8.x     | 8.4+   | `main` | new features        |
+| 7.x    | 7.x     | 8.2+   | `7.x`  | bug fixes           |
+| 6.x    | 6.4     | 8.1+   | `6.x`  | bug fixes           |
+| 5.x    | 5.4     | 7.2.5+ | `5.x`  | security fixes only |
 
 For older Symfony versions, use `tattali/utm-cookie-bundle:^6.0`. See the [changelog](CHANGELOG.md) when upgrading.
 

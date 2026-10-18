@@ -1,6 +1,13 @@
 Changelog
 =========
 
+8.1.0
+-----
+
+- Support Symfony 8 only. Symfony 7 is covered by the 7.x versions, Symfony 6.4 by the 6.x
+  versions and Symfony 5.4 by the 5.x versions
+- Require PHP 8.4 or later, as Symfony 8 does
+
 8.0.0
 -----
 
