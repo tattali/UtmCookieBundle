@@ -21,12 +21,20 @@ class TestKernel extends Kernel
     private $utmCookieConfig;
 
     /**
+     * @var string
+     */
+    private $cacheDir;
+
+    /**
      * @param array<string, mixed> $utmCookieConfig
      */
     public function __construct(array $utmCookieConfig = [])
     {
         parent::__construct('test', true);
         $this->utmCookieConfig = $utmCookieConfig;
+        // a new container for each kernel: a cached one would hide changes to the bundle's code,
+        // such as the mutants of mutation tests
+        $this->cacheDir = sys_get_temp_dir().'/utm-cookie-bundle/'.uniqid('', true);
     }
 
     public function registerBundles(): iterable
@@ -47,7 +55,7 @@ class TestKernel extends Kernel
 
     public function getCacheDir(): string
     {
-        return sys_get_temp_dir().'/utm-cookie-bundle/'.md5(__DIR__.self::VERSION.json_encode($this->utmCookieConfig)).'/cache';
+        return $this->cacheDir;
     }
 
     public function getLogDir(): string
@@ -58,5 +66,21 @@ class TestKernel extends Kernel
     public function getProjectDir(): string
     {
         return \dirname(__DIR__);
+    }
+
+    public function removeCacheDir(): void
+    {
+        if (!is_dir($this->cacheDir)) {
+            return;
+        }
+        $files = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($this->cacheDir, \FilesystemIterator::SKIP_DOTS),
+            \RecursiveIteratorIterator::CHILD_FIRST
+        );
+        foreach ($files as $file) {
+            \assert($file instanceof \SplFileInfo);
+            $file->isDir() ? rmdir($file->getPathname()) : unlink($file->getPathname());
+        }
+        rmdir($this->cacheDir);
     }
 }
