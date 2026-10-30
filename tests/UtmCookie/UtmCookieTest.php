@@ -300,7 +300,7 @@ final class UtmCookieTest extends TestCase
     {
         $request = Request::create('/', 'GET', ['utm_source' => 'ads']);
         $utmCookie = $this->createUtmCookie($request);
-        $kernel = $this->createMock(HttpKernelInterface::class);
+        $kernel = self::createStub(HttpKernelInterface::class);
 
         $utmCookie->onKernelRequest(new RequestEvent($kernel, $request, HttpKernelInterface::SUB_REQUEST));
         self::assertNull($this->sendResponse($utmCookie));
@@ -362,7 +362,7 @@ final class UtmCookieTest extends TestCase
     private function sendResponse(UtmCookie $utmCookie): ?Cookie
     {
         $response = new Response();
-        $utmCookie->onKernelResponse(new ResponseEvent($this->createMock(HttpKernelInterface::class), Request::create('/'), HttpKernelInterface::MAIN_REQUEST, $response));
+        $utmCookie->onKernelResponse(new ResponseEvent(self::createStub(HttpKernelInterface::class), Request::create('/'), HttpKernelInterface::MAIN_REQUEST, $response));
 
         $cookies = $response->headers->getCookies();
 

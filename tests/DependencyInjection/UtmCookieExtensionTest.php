@@ -67,7 +67,7 @@ final class UtmCookieExtensionTest extends TestCase
         self::assertSame('launch', $utmCookie->get('campaign'));
 
         $response = new Response();
-        $utmCookie->onKernelResponse(new ResponseEvent($this->createMock(HttpKernelInterface::class), Request::create('/'), HttpKernelInterface::MAIN_REQUEST, $response));
+        $utmCookie->onKernelResponse(new ResponseEvent(self::createStub(HttpKernelInterface::class), Request::create('/'), HttpKernelInterface::MAIN_REQUEST, $response));
         $cookie = $response->headers->getCookies()[0] ?? null;
 
         self::assertInstanceOf(Cookie::class, $cookie);
@@ -138,7 +138,7 @@ final class UtmCookieExtensionTest extends TestCase
         $utmCookie->init();
 
         $response = new Response();
-        $utmCookie->onKernelResponse(new ResponseEvent($this->createMock(HttpKernelInterface::class), Request::create($uri), HttpKernelInterface::MAIN_REQUEST, $response));
+        $utmCookie->onKernelResponse(new ResponseEvent(self::createStub(HttpKernelInterface::class), Request::create($uri), HttpKernelInterface::MAIN_REQUEST, $response));
         $cookie = $response->headers->getCookies()[0] ?? null;
         self::assertInstanceOf(Cookie::class, $cookie);
 
