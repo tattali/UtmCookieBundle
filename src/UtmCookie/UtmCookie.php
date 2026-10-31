@@ -277,11 +277,11 @@ class UtmCookie implements ResetInterface
     }
 
     /**
-     * The domain of the cookie, null when none is set ("" and "0" mean none, as before).
+     * The domain of the cookie: "" when none is set. "0" also means none, as before.
      */
-    private function cookieDomain(): ?string
+    private function cookieDomain(): string
     {
-        return '' === $this->domain || '0' === $this->domain ? null : $this->domain;
+        return '0' === $this->domain ? '' : $this->domain;
     }
 
     private function sendCookie(Cookie $cookie): void
