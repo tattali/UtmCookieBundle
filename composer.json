@@ -44,9 +44,14 @@
         "phpstan/phpstan-phpunit": "^2.0",
         "phpstan/phpstan-strict-rules": "^2.0",
         "phpstan/phpstan-symfony": "^2.0",
-        "phpunit/phpunit": "^10.5 || ^11.5 || ^12.5 || ^13.4",
+        "phpunit/phpunit": "^10.5.40 || ^11.5 || ^12.5 || ^13.4",
         "shipmonk/composer-dependency-analyser": "^1.8",
-        "symfony/event-dispatcher": "^6.4"
+        "symfony/cache-contracts": "^2.5.4 || ^3.6",
+        "symfony/http-foundation": "^6.4.26",
+        "symfony/error-handler": "^6.4.26",
+        "symfony/event-dispatcher": "^6.4.26",
+        "symfony/event-dispatcher-contracts": "^2.5.3 || ^3.6",
+        "symfony/filesystem": "^6.4.26"
     },
     "config": {
         "allow-plugins": {
