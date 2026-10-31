@@ -50,9 +50,11 @@ final class UtmCookieTest extends TestCase
         self::assertSame($expected, json_decode((string) $cookie->getValue(), true));
         self::assertEqualsWithDelta(time() + 3600, $cookie->getExpiresTime(), 5);
         self::assertSame('/', $cookie->getPath());
-        self::assertNull($cookie->getDomain());
+        self::assertSame('', $cookie->getDomain());
+        self::assertStringNotContainsString('domain=', (string) $cookie);
         self::assertFalse($cookie->isSecure());
         self::assertFalse($cookie->isHttpOnly());
+        self::assertFalse($cookie->isRaw(), 'The JSON value is URL-encoded in the header.');
     }
 
     public function testCookieOptionsAreApplied(): void
@@ -72,6 +74,18 @@ final class UtmCookieTest extends TestCase
         self::assertSame('example.com', $cookie->getDomain());
         self::assertTrue($cookie->isSecure());
         self::assertTrue($cookie->isHttpOnly());
+    }
+
+    public function testDomainZeroSendsNoDomain(): void
+    {
+        $utmCookie = $this->createUtmCookie(Request::create('/', 'GET', ['utm_source' => 'ads']));
+        $utmCookie->setDomain('0');
+        $utmCookie->init();
+
+        $cookie = $this->sendResponse($utmCookie);
+        self::assertInstanceOf(Cookie::class, $cookie);
+        self::assertSame('', $cookie->getDomain());
+        self::assertStringNotContainsString('domain=', (string) $cookie);
     }
 
     public function testValuesAreReadFromCookie(): void
@@ -181,6 +195,9 @@ final class UtmCookieTest extends TestCase
         self::assertInstanceOf(Cookie::class, $cookie);
         self::assertSame('utm', $cookie->getName());
         self::assertTrue($cookie->isCleared());
+        self::assertSame(1, $cookie->getExpiresTime(), 'Same expiry as Response::headers->clearCookie().');
+        self::assertFalse($cookie->isRaw());
+        self::assertSame('', $cookie->getDomain());
     }
 
     public function testGetReturnsNullValuesAfterClear(): void
