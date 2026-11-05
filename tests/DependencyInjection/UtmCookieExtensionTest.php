@@ -6,7 +6,9 @@ namespace UtmCookieBundle\Tests\DependencyInjection;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
+use Symfony\Component\DependencyInjection\Compiler\MergeExtensionConfigurationPass;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\ParameterBag\EnvPlaceholderParameterBag;
 use Symfony\Component\HttpFoundation\Cookie;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -41,6 +43,22 @@ final class UtmCookieExtensionTest extends TestCase
 
         self::assertSame(
             [['event' => 'kernel.response', 'method' => 'onKernelResponse']],
+            $container->getDefinition(UtmCookie::class)->getTag('kernel.event_listener'),
+        );
+    }
+
+    public function testAutoInitFromAnEnvVarKeepsTheRequestListener(): void
+    {
+        // A Kernel compiles the container with env placeholders: the option then reaches the extension as a
+        // placeholder string, not as a bool, and the listener is registered whatever the variable holds.
+        $container = new ContainerBuilder(new EnvPlaceholderParameterBag());
+        $container->registerExtension(new UtmCookieExtension());
+        $container->loadFromExtension('utm_cookie', ['auto_init' => '%env(bool:UTM_COOKIE_AUTO_INIT)%']);
+        $container->getCompilerPassConfig()->setMergePass(new MergeExtensionConfigurationPass());
+        $container->compile(true);
+
+        self::assertContains(
+            ['event' => 'kernel.request', 'method' => 'onKernelRequest'],
             $container->getDefinition(UtmCookie::class)->getTag('kernel.event_listener'),
         );
     }
