@@ -32,7 +32,7 @@ class UtmCookieExtension extends Extension
             ->addTag('kernel.reset', ['method' => 'reset'])
         ;
 
-        if ($config['auto_init']) {
+        if (false !== $config['auto_init']) {
             $definition->addTag('kernel.event_listener', ['event' => 'kernel.request', 'method' => 'onKernelRequest']);
         }
     }
